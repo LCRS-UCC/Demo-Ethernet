@@ -55,6 +55,19 @@ typedef enum
 } Led_TypeDef;
 
 typedef enum 
+{
+  ELED0 = 0,
+  ELED1 = 1,
+  ELED2 = 2,
+  ELED3 = 3,
+  ELED4 = 4,
+  ELED5 = 5,
+  ELED6 = 6,
+  ELED7 = 7
+} Exp_Led_TypeDef;
+
+
+typedef enum
 {  
   BUTTON_USER = 0,
 } Button_TypeDef;
@@ -162,6 +175,18 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led);
 void STM_EVAL_PBInit(Button_TypeDef Button, ButtonMode_TypeDef Button_Mode);
 void STM_EVAL_COMInit(COM_TypeDef COM, USART_InitTypeDef* USART_InitStruct);
 uint32_t STM_EVAL_PBGetState(Button_TypeDef Button);
+void STM_EVAL_SET_Red(uint8_t Red);
+void STM_EVAL_SET_Green(uint8_t Green);
+void STM_EVAL_SET_Blue(uint8_t Blue);
+void STM_EVAL_EXP_SW(void);
+void STM_EVAL_EXP_LED_INIT(void);
+void STM_EVAL_EXP_LED_TOGGLE(uint8_t i);
+void STM_EVAL_EXP_RGB(void);
+void STM_EVAL_EXP_INIT(void);
+void LCD_LED_Init(void);
+void ADC_Configuration(void);
+
+
 /**
   * @}
   */

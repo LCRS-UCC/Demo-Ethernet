@@ -22,6 +22,7 @@
   
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4_discovery.h"
+#include "stm32f4xx_tim.h"		// Modulos Timers
 
 /** @addtogroup Utilities
   * @{
@@ -107,6 +108,11 @@ const uint16_t COM_RX_PIN_SOURCE[COMn] = {EVAL_COM1_RX_SOURCE};
 const uint16_t COM_TX_AF[COMn] = {EVAL_COM1_TX_AF};
 
 const uint16_t COM_RX_AF[COMn] = {EVAL_COM1_RX_AF};
+
+
+uint16_t const leds[] = { GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_3,
+		GPIO_Pin_6, GPIO_Pin_7, GPIO_Pin_10, GPIO_Pin_11 };
+uint16_t const switches[] = { GPIO_Pin_2, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6 };
 
 NVIC_InitTypeDef   NVIC_InitStructure;
 
@@ -247,6 +253,19 @@ void STM_EVAL_PBInit(Button_TypeDef Button, ButtonMode_TypeDef Button_Mode)
   }
 }
 
+void STM_EVAL_SET_Red(uint8_t Red)
+{
+	TIM3->CCR3 = 1000 - Red * 10;
+}
+void STM_EVAL_SET_Green(uint8_t Green)
+{
+	TIM3->CCR4 = 1000 - Green * 10;
+}
+void STM_EVAL_SET_Blue(uint8_t Blue)
+{
+	TIM3->CCR1 = 1000 - Blue * 10;
+}
+
 /**
   * @brief  Configures COM port.
   * @param  COM: Specifies the COM port to be configured.
@@ -268,7 +287,7 @@ void STM_EVAL_COMInit(COM_TypeDef COM, USART_InitTypeDef* USART_InitStruct)
        - Hardware flow control disabled (RTS and CTS signals)
        - Receive and transmit enabled
  */
- USART_InitStructure.USART_BaudRate = 230400;//115200;
+ USART_InitStructure.USART_BaudRate = 115200;//115200;
  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
  USART_InitStructure.USART_StopBits = USART_StopBits_1;
  USART_InitStructure.USART_Parity = USART_Parity_No;
@@ -322,6 +341,185 @@ void STM_EVAL_COMInit(COM_TypeDef COM, USART_InitTypeDef* USART_InitStruct)
 uint32_t STM_EVAL_PBGetState(Button_TypeDef Button)
 {
   return GPIO_ReadInputDataBit(BUTTON_PORT[Button], BUTTON_PIN[Button]);
+}
+
+
+
+
+
+
+
+
+
+void STM_EVAL_EXP_RGB(void) {
+	TIM_TimeBaseInitTypeDef TIM_config;
+	GPIO_InitTypeDef GPIO_config;
+	TIM_OCInitTypeDef TIM_OC_config;
+
+	/* Habilito el clock */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
+	/* Configuro leds como Segunda Funcion */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+	GPIO_config.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_config.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_4;
+	GPIO_config.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_config.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_config.GPIO_OType = GPIO_OType_PP;
+
+	GPIO_Init(GPIOB, &GPIO_config);
+
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource1, GPIO_AF_TIM3);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource4, GPIO_AF_TIM3);
+
+	uint16_t PrescalerValue = 0;
+	/* Compute the prescaler value */
+	PrescalerValue =
+
+	TIM_config.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_config.TIM_ClockDivision = 0;
+	TIM_config.TIM_Period = 1000;
+	TIM_config.TIM_Prescaler = (uint16_t)((SystemCoreClock / 2) / 1000000) - 1;
+	TIM_TimeBaseInit(TIM3, &TIM_config);
+
+	TIM_OC_config.TIM_OCMode = TIM_OCMode_PWM1;
+	TIM_OC_config.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OC_config.TIM_Pulse = 1000;
+	TIM_OC_config.TIM_OCPolarity = TIM_OCPolarity_High;
+
+	// CH1 del pwm
+	TIM_OC3Init(TIM3, &TIM_OC_config);
+	TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+	//CH2 del pwm
+	TIM_OC_config.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OC_config.TIM_Pulse = 1000;
+	TIM_OC4Init(TIM3, &TIM_OC_config);
+	TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+	//CH3 del pwm
+	TIM_OC_config.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OC_config.TIM_Pulse = 1000;
+	TIM_OC1Init(TIM3, &TIM_OC_config);
+	TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+	TIM_ARRPreloadConfig(TIM3, ENABLE);
+
+	TIM_Cmd(TIM3, ENABLE);
+
+}
+
+void STM_EVAL_EXP_LED_INIT(void) {
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	// Arranco el clock del periferico
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3
+			| GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10 | GPIO_Pin_11;
+
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP; // (Push/Pull)
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOD, &GPIO_InitStruct);
+}
+
+
+void STM_EVAL_EXP_LED_TOGGLE(uint8_t i){
+	GPIO_ToggleBits(GPIOD, leds[i]);
+}
+
+void STM_EVAL_EXP_SW(void) {
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	// Arranco el clock del periferico
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_5
+			| GPIO_Pin_6;
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+}
+
+
+void STM_EVAL_EXP_INIT(void){
+	/*Initialize LCD and Leds */
+	LCD_LED_Init();
+	STM_EVAL_EXP_SW();
+	STM_EVAL_EXP_LED_INIT();
+	STM_EVAL_EXP_RGB();
+	ADC_Configuration();
+
+	}
+
+
+/**
+ * @brief  Configures the ADC.
+ * @param  None
+ * @retval None
+ */
+void ADC_Configuration(void) {
+	ADC_InitTypeDef ADC_InitStructure;
+	ADC_CommonInitTypeDef ADC_CommonInitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	/* Enable ADC3 clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3, ENABLE);
+
+	/* Configure ADC Channel 12 as analog input */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	/* ADC Common Init */
+	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
+	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div6;
+	ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
+	ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
+	ADC_CommonInit(&ADC_CommonInitStructure);
+
+	/* ADC3 Configuration ------------------------------------------------------*/
+	ADC_StructInit(&ADC_InitStructure);
+	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
+	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	ADC_InitStructure.ADC_NbrOfConversion = 1;
+	ADC_Init(ADC3, &ADC_InitStructure);
+
+	/* ADC3 Regular Channel Config */
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_56Cycles);
+
+	/* Enable ADC3 */
+	ADC_Cmd(ADC3, ENABLE);
+
+	/* ADC3 regular Software Start Conv */
+	ADC_SoftwareStartConv(ADC3);
+}
+
+
+/**
+ * @brief  Initializes the STM324xG-EVAL's LCD and LEDs resources.
+ * @param  None
+ * @retval None
+ */
+void LCD_LED_Init(void) {
+
+	/* Initialize STM324xG-EVAL's LEDs */
+	STM_EVAL_LEDInit(LED5);
+	STM_EVAL_LEDInit(LED6);
+	STM_EVAL_LEDInit(LED3);
+	STM_EVAL_LEDInit(LED4);
+
 }
 
 /**

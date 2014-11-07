@@ -43,7 +43,7 @@ char const** TAGS= { &TAGCHAR, &TAGCHAR2 };
 const char * LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
 
 /* Html request for "/leds.cgi" will start LEDS_CGI_Handler */
-const tCGI LEDS_CGI={"/leds.cgi", LEDS_CGI_Handler};
+const tCGI LEDS_CGI={"/rgb.cgi", LEDS_CGI_Handler};
 
 /* Cgi call table, only one CGI used */
 tCGI CGI_TAB[1];
@@ -107,6 +107,7 @@ u16_t ADC_Handler(int iIndex, char *pcInsert, int iInsertLen)
 const char * LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
   uint32_t i=0;
+  uint16_t val;
   
   /* We have only one SSI handler iIndex = 0 */
   if (iIndex==0)
@@ -117,32 +118,41 @@ const char * LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char 
     STM_EVAL_LEDOff(LED3);
     STM_EVAL_LEDOff(LED4);
     
+
+
+
     /* Check cgi parameter : example GET /leds.cgi?led=2&led=4 */
     for (i=0; i<iNumParams; i++)
     {
+
+
+
       /* check parameter "led" */
-      if (strcmp(pcParam[i] , "led")==0)   
+      if (strcmp(pcParam[i] , "red")==0)
       {
-        /* switch led1 ON if 1 */
-        if(strcmp(pcValue[i], "1") ==0) 
-          STM_EVAL_LEDOn(LED3);
-          
-        /* switch led2 ON if 2 */
-        else if(strcmp(pcValue[i], "2") ==0) 
-          STM_EVAL_LEDOn(LED5);
-        
-        /* switch led3 ON if 3 */
-        else if(strcmp(pcValue[i], "3") ==0) 
-          STM_EVAL_LEDOn(LED6);
-        
-        /* switch led4 ON if 4 */
-        else if(strcmp(pcValue[i], "4") ==0) 
-          STM_EVAL_LEDOn(LED4);
+
+    	  val=atoi(pcValue[i]);
+    	  STM_EVAL_SET_Red(val);
       }
+
+      if (strcmp(pcParam[i] , "green")==0)
+      {
+
+    	  val=atoi(pcValue[i]);
+    	  STM_EVAL_SET_Green(val);
+      }
+
+      if (strcmp(pcParam[i] , "blue")==0)
+      {
+
+    	  val=atoi(pcValue[i]);
+    	  STM_EVAL_SET_Blue(val);
+      }
+
     }
   }
   /* uri to send after cgi call*/
-  return "/STM32F4x7LED.html";  
+  return "/index.html";
 }
 
 /**
