@@ -459,6 +459,10 @@ void STM_EVAL_EXP_INIT(void){
 
 	}
 
+void STM_EVAL_EXP_SEND_UART(char *msj){
+		printf("Mensaje enviado desde la pagina Web: %s\n\r",msj);
+	}
+
 
 /**
  * @brief  Configures the ADC.

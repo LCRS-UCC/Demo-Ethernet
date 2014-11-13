@@ -183,6 +183,7 @@ void STM_EVAL_EXP_LED_INIT(void);
 void STM_EVAL_EXP_LED_TOGGLE(uint8_t i);
 void STM_EVAL_EXP_RGB(void);
 void STM_EVAL_EXP_INIT(void);
+void STM_EVAL_EXP_SEND_UART(char *msj);
 void LCD_LED_Init(void);
 void ADC_Configuration(void);
 
